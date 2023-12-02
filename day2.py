@@ -1,73 +1,86 @@
 import itertools
+from dataclasses import dataclass
+from parse import parse
 from aocd import get_data
 from icecream import ic
 
 
-def extract_number_portion(input_line: str, text_numbers: list[str]) -> int:
-    extracted_number = None
-    number_positions = {}
-    for current_index, current_character in enumerate(input_line):
-        if current_character.isdigit():
-            extracted_number = current_character
-            number_positions[current_index] = int(current_character)
-            break
-    if extracted_number is None or 2 < current_index < len(input_line):
-        if extracted_number is None:
-            current_index = len(input_line)
-        partial_line = input_line[:current_index]
-        if partial_line.isalpha():
-            for text_number in text_numbers:
-                found_index = partial_line.find(text_number)
-                if found_index > -1:
-                    number_positions[found_index] = text_numbers.index(text_number) + 1
-            number_keys = list(number_positions.keys())
-            number_keys.sort()
-            extracted_number = number_positions[number_keys[0]]
-        else:
-            for text_number in text_numbers:
-                if text_number in partial_line:
-                    extracted_number = text_numbers.index(text_number) + 1
-                    break
-    return extracted_number
+@dataclass
+class GameTurn:
+    blue: int
+    red: int
+    green: int
 
 
-def get_part2_extracted_number(input_line: str) -> int:
-    valid_text_numbers = ['one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine']
-    first_digit = extract_number_portion(input_line, valid_text_numbers)
-    reversed_text_numbers = []
-    for text_number in valid_text_numbers:
-        reversed_text_numbers.append(text_number[::-1])
-    reversed_input_line = input_line[::-1]
-    last_digit = extract_number_portion(reversed_input_line, reversed_text_numbers)
-    return int(f'{first_digit}{last_digit}')
+@dataclass
+class GameResult:
+    id: int
+    turns: list[GameTurn]
+
+    def red_cubes(self):
+        return sum(turn.red for turn in self.turns)
+
+    def green_cubes(self):
+        return sum(turn.green for turn in self.turns)
+
+    def blue_cubes(self):
+        return sum(turn.blue for turn in self.turns)
 
 
-def get_part1_extracted_number(input_line: str) -> int:
-    first_digit = None
-    last_digit = None
-    for current_character in input_line:
-        if current_character.isdigit():
-            first_digit = current_character
-            break
-    for current_character in input_line[::-1]:
-        if current_character.isdigit():
-            last_digit = current_character
-            break
-    return int(f'{first_digit}{last_digit}')
+@dataclass
+class GameBag:
+    red: int
+    green: int
+    blue: int
+
+    def is_game_valid(self, game: GameResult) -> bool:
+        for game_turn in game.turns:
+            if game_turn.red > self.red or game_turn.blue > self.blue or game_turn.green > self.green:
+                return False
+        return True
+
+
+def get_game_result(game_result_text: str) -> GameResult:
+    id, turns = parse('Game {:d}: {}', game_result_text)
+    parsed_turns = []
+    for turn_result in turns.split(";"):
+        parsed_turns.append(get_game_turn(turn_result))
+    game = GameResult(id, parsed_turns)
+    ic(game)
+    return game
+
+
+def get_game_turn(game_line: str) -> list[GameTurn]:
+    new_turn = GameTurn(0, 0, 0)
+    for current_turn in game_line.split(","):
+        count, color = parse('{:d} {}', current_turn)
+        if color == 'red':
+            new_turn.red = count
+            continue
+        if color == 'blue':
+            new_turn.blue = count
+            continue
+        if color == 'green':
+            new_turn.green = count
+            continue
+    return new_turn
 
 
 if __name__ == '__main__':
-    # data = get_data(day=2, year=2023).splitlines()
-    data = ['1abc2', 'pqr3stu8vwx', 'a1b2c3d4e5f', 'treb7uchet']
-    data_part2 = ['two1nine', 'eightwothree', 'abcone2threexyz', 'xtwone3four', '4nineeightseven2', 'zoneight234',
-                  '7pqrstsixteen']
+    data = get_data(day=2, year=2023).splitlines()
+    # data = ['Game 1: 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green',
+    #         'Game 2: 1 blue, 2 green; 3 green, 4 blue, 1 red; 1 green, 1 blue',
+    #         'Game 3: 8 green, 6 blue, 20 red; 5 blue, 4 red, 13 green; 5 green, 1 red',
+    #         'Game 4: 1 green, 3 red, 6 blue; 3 green, 6 red; 3 green, 15 blue, 14 red',
+    #         'Game 5: 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green']
 
-    extracted_numbers_part1 = []
-    extracted_numbers_part2 = []
+    valid_games = []
+    game_bounds = GameBag(12, 13, 14)
+
     for current_line in data:
-        extracted_numbers_part1.append(get_part1_extracted_number(current_line))
-    ic(f'Part 1 {sum(extracted_numbers_part1)}')
+        current_game_results = get_game_result(current_line)
+        if game_bounds.is_game_valid(current_game_results):
+            valid_games.append(current_game_results)
 
-    for current_line in data_part2:
-        extracted_numbers_part2.append(get_part2_extracted_number(current_line))
-    ic(f'Part 2 {sum(extracted_numbers_part2)}')
+    part1 = sum(valid_game.id for valid_game in valid_games)
+    ic(f'Part 1: {part1}')
