@@ -1,4 +1,5 @@
 import itertools
+import math
 from dataclasses import dataclass
 from parse import parse
 from aocd import get_data
@@ -48,21 +49,21 @@ def get_uniques(input_numbers: dict) -> list[int]:
 
 
 if __name__ == '__main__':
-    data = get_data(day=3, year=2023).splitlines()
-    # data = ['467..114..',
-    #         '...*......',
-    #         '..35..633.',
-    #         '......#...',
-    #         '617*......',
-    #         '.....+.58.',
-    #         '..592.....',
-    #         '......755.',
-    #         '...$.*....',
-    #         '.664.598..']
-
-    ic(data)
+    # data = get_data(day=3, year=2023).splitlines()
+    data = ['467..114..',
+            '...*......',
+            '..35..633.',
+            '......#...',
+            '617*......',
+            '.....+.58.',
+            '..592.....',
+            '......755.',
+            '...$.*....',
+            '.664.598..']
 
     part_numbers = []
+    gear_ratios = []
+
     for row_index, row_data in enumerate(data):
         symbol_parts = []
         for col_index, col_value in enumerate(row_data):
@@ -90,12 +91,16 @@ if __name__ == '__main__':
             if bottom_numbers['right'] == bottom_numbers['below']:
                 bottom_numbers['right'] = None
 
-            symbol_parts.extend(get_uniques(top_numbers))
-            symbol_parts.extend(get_uniques(number_positions))
-            symbol_parts.extend(get_uniques(bottom_numbers))
+            total_uniques = list(itertools.chain(get_uniques(top_numbers), get_uniques(number_positions), get_uniques(bottom_numbers)))
+            symbol_parts.extend(total_uniques)
+
+            if col_value == '*' and len(total_uniques) > 1:
+                gear_ratios.append(ic(math.prod(total_uniques)))
 
         if len(symbol_parts) > 0:
             part_numbers.extend(symbol_parts)
 
     part1 = sum(part_numbers)
     ic(f'Part 1: {part1}')
+    part2 = sum(gear_ratios)
+    ic(f'Part 2: {part2}')
