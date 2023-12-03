@@ -1,4 +1,4 @@
-# Advent of Code 2023
+# Advent of Code 2023 [![forthebadge made-with-python](http://ForTheBadge.com/images/badges/made-with-python.svg)](https://www.python.org/)
 
 ![](https://img.shields.io/badge/day%20📅-2-blue)
 ![](https://img.shields.io/badge/stars%20⭐-4-yellow)
