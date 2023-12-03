@@ -18,17 +18,16 @@ class GameResult:
     turns: list[GameTurn]
 
     def red_cubes(self):
-        return max(turn.red for turn in self.turns)
+        return ic(max(turn.red for turn in self.turns))
 
     def green_cubes(self):
-        return max(turn.green for turn in self.turns)
+        return ic(max(turn.green for turn in self.turns))
 
     def blue_cubes(self):
-        return max(turn.blue for turn in self.turns)
+        return ic(max(turn.blue for turn in self.turns))
 
     def min_cubes_to_play_game(self) -> int:
-        ic(f'Red: {self.red_cubes()}, Green: {self.green_cubes()}, Blue: {self.blue_cubes()}')
-        return self.red_cubes() * self.green_cubes() * self.blue_cubes()
+        return ic(self.red_cubes() * self.green_cubes() * self.blue_cubes())
 
 @dataclass
 class GameBag:
@@ -47,8 +46,7 @@ def get_game_result(game_result_text: str) -> GameResult:
     id, turns = parse('Game {:d}: {}', game_result_text)
     parsed_turns = [get_game_turn(turn_result) for turn_result in turns.split(";")]
     game = GameResult(id, parsed_turns)
-    ic(game)
-    return game
+    return ic(game)
 
 
 def get_game_turn(game_line: str) -> list[GameTurn]:
@@ -79,8 +77,8 @@ if __name__ == '__main__':
     for current_line in data:
         current_game_results = get_game_result(current_line)
         if game_bounds.is_game_valid(current_game_results):
-            valid_games.append(current_game_results)
-        part2 += current_game_results.min_cubes_to_play_game()
+            valid_games.append(ic(current_game_results))
+        part2 += ic(current_game_results.min_cubes_to_play_game())
 
     part1 = sum(valid_game.id for valid_game in valid_games)
     ic(f'Part 1: {part1}')
