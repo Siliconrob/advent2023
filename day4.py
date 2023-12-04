@@ -1,5 +1,6 @@
 import itertools
 import math
+import re
 from dataclasses import dataclass
 from parse import parse
 from aocd import get_data
@@ -12,6 +13,7 @@ class Card:
     id: int
     winning_numbers: list[int]
     game_numbers: list[int]
+    instances: int = 1
 
     def matches(self):
         return list(set(self.game_numbers) & set(self.winning_numbers))
@@ -26,7 +28,7 @@ class Card:
 def parse_card(card_input: str) -> Card:
     card_parts = card_input.split("|")
     win_section = card_parts[0].split(":")
-    card_id = parse('{} {:d}', win_section[0])[0]
+    card_id = int(re.findall('\d', win_section[0])[0])
     winning_numbers = [int(valid_number) for valid_number in
                        list(itertools.filterfalse(lambda x: x == '', [number for number in win_section[1].split(" ")]))]
     game_numbers = [int(valid_number) for valid_number in
@@ -46,3 +48,15 @@ if __name__ == '__main__':
     game_cards = [parse_card(card_line) for card_line in data]
     part1 = sum([game_card.score() for game_card in game_cards])
     ic(f'Part 1: {part1}')
+
+    for index, card in enumerate(game_cards):
+        matches = len(card.matches())
+        if matches == 0:
+            continue
+        while matches > 0:
+            if matches + index <= len(game_cards):
+                game_cards[index + matches].instances += 1
+            matches -= 1
+
+    part2 = sum(card.instances for card in game_cards)
+    ic(f'Part 2: {part2}')
