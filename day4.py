@@ -54,9 +54,10 @@ if __name__ == '__main__':
         if matches == 0:
             continue
         while matches > 0:
-            if matches + index <= len(game_cards):
-                game_cards[index + matches].instances += 1
+            if matches + index < len(game_cards):
+                cards_to_add = card.instances if card.instances > 1 else 1
+                game_cards[index + matches].instances += cards_to_add
             matches -= 1
-
+    ic(game_cards)
     part2 = sum(card.instances for card in game_cards)
     ic(f'Part 2: {part2}')
