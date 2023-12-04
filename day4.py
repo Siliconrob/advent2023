@@ -7,100 +7,42 @@ from icecream import ic
 from collections import deque
 
 
-def get_symbol_part(check_row_index: int, check_col_index: int, row_data: str, all_rows: []) -> int:
-    if -1 < check_row_index < len(data) and -1 < check_col_index < len(row_data):
-        target_row = all_rows[check_row_index]
-        target_char = target_row[check_col_index]
-        if target_char.isnumeric():
-            return get_number(target_row, check_col_index)
-    return None
+@dataclass
+class Card:
+    id: int
+    winning_numbers: list[int]
+    game_numbers: list[int]
+
+    def matches(self):
+        return list(set(self.game_numbers) & set(self.winning_numbers))
+
+    def score(self):
+        matches = len(self.matches())
+        if matches == 0:
+            return 0
+        return math.pow(2, matches - 1)
 
 
-def get_number(row_text: str, start_index: int) -> int:
-    left_side = [*row_text[:start_index]]
-    right_side = deque([*row_text[start_index:]])
-
-    current_digits = []
-    while left_side:
-        current_element = left_side.pop()
-        if current_element.isnumeric():
-            current_digits.append(current_element)
-        else:
-            break
-
-    current_digits.reverse()
-    while right_side:
-        current_element = right_side.popleft()
-        if current_element.isnumeric():
-            current_digits.append(current_element)
-        else:
-            break
-
-    number_text = ''.join(digit for digit in current_digits)
-    return ic(int(number_text))
-
-
-def get_uniques(input_numbers: dict) -> list[int]:
-    uniques = []
-    for the_number in input_numbers.values():
-        if the_number is not None:
-            uniques.append(the_number)
-    return uniques
+def parse_card(card_input: str) -> Card:
+    card_parts = card_input.split("|")
+    win_section = card_parts[0].split(":")
+    card_id = parse('{} {:d}', win_section[0])[0]
+    winning_numbers = [int(valid_number) for valid_number in
+                       list(itertools.filterfalse(lambda x: x == '', [number for number in win_section[1].split(" ")]))]
+    game_numbers = [int(valid_number) for valid_number in
+                    list(itertools.filterfalse(lambda x: x == '', [number for number in card_parts[1].split(" ")]))]
+    return ic(Card(card_id, winning_numbers, game_numbers))
 
 
 if __name__ == '__main__':
     # data = get_data(day=4, year=2023).splitlines()
-    data = ['467..114..',
-            '...*......',
-            '..35..633.',
-            '......#...',
-            '617*......',
-            '.....+.58.',
-            '..592.....',
-            '......755.',
-            '...$.*....',
-            '.664.598..']
+    data = ['Card 1: 41 48 83 86 17 | 83 86  6 31 17  9 48 53',
+            'Card 2: 13 32 20 16 61 | 61 30 68 82 17 32 24 19',
+            'Card 3:  1 21 53 59 44 | 69 82 63 72 16 21 14  1',
+            'Card 4: 41 92 73 84 69 | 59 84 76 51 58  5 54 83',
+            'Card 5: 87 83 26 28 32 | 88 30 70 12 93 22 82 36',
+            'Card 6: 31 18 13 56 72 | 74 77 10 23 35 67 36 11']
 
-    part_numbers = []
-    gear_ratios = []
-
-    for row_index, row_data in enumerate(data):
-        symbol_parts = []
-        for col_index, col_value in enumerate(row_data):
-            if col_value.isnumeric() or col_value == '.':
-                continue
-
-            top_numbers = {'left': get_symbol_part(row_index - 1, col_index - 1, row_data, data),
-                           'above': get_symbol_part(row_index - 1, col_index, row_data, data),
-                           'right': get_symbol_part(row_index - 1, col_index + 1, row_data, data)}
-
-            if top_numbers['left'] == top_numbers['above']:
-                top_numbers['left'] = None
-            if top_numbers['right'] == top_numbers['above']:
-                top_numbers['right'] = None
-
-            number_positions = {'left': get_symbol_part(row_index, col_index - 1, row_data, data),
-                                'right': get_symbol_part(row_index, col_index + 1, row_data, data)}
-
-            bottom_numbers = {'left': get_symbol_part(row_index + 1, col_index - 1, row_data, data),
-                              'below': get_symbol_part(row_index + 1, col_index, row_data, data),
-                              'right': get_symbol_part(row_index + 1, col_index + 1, row_data, data)}
-
-            if bottom_numbers['left'] == bottom_numbers['below']:
-                bottom_numbers['left'] = None
-            if bottom_numbers['right'] == bottom_numbers['below']:
-                bottom_numbers['right'] = None
-
-            total_uniques = list(itertools.chain(get_uniques(top_numbers), get_uniques(number_positions), get_uniques(bottom_numbers)))
-            symbol_parts.extend(total_uniques)
-
-            if col_value == '*' and len(total_uniques) > 1:
-                gear_ratios.append(ic(math.prod(total_uniques)))
-
-        if len(symbol_parts) > 0:
-            part_numbers.extend(symbol_parts)
-
-    part1 = sum(part_numbers)
+    game_cards = [parse_card(card_line) for card_line in data]
+    part1 = sum([game_card.score() for game_card in game_cards])
     ic(f'Part 1: {part1}')
-    part2 = sum(gear_ratios)
-    ic(f'Part 2: {part2}')
