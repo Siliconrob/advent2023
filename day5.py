@@ -5,7 +5,7 @@ from icecream import ic
 from parse import parse
 
 
-def parse_seeds(seed_group: list[str]) -> list[int]:
+def parse_seeds_part1(seed_group: list[str]) -> list[int]:
     return [int(seed_number) for seed_number in seed_group.pop().split(":")[1].strip().split(" ")]
 
 
@@ -88,8 +88,6 @@ if __name__ == '__main__':
             '56 93 4']
 
     input_groups = [list(g) for k, g in groupby(data, key=lambda x: x == '') if not k]
-    seeds = parse_seeds(input_groups[0])
-    ic(seeds)
-
+    seeds_part1 = ic(parse_seeds_part1(input_groups[0]))
     mapping_chains = get_mapping_chain_fns(input_groups[1:])
-    ic(f'Part 1: {part1_solve(mapping_chains, seeds)}')
+    ic(f'Part 1: {part1_solve(mapping_chains, seeds_part1)}')
