@@ -34,72 +34,16 @@ def parse_mappings(mapping_group: list[str]) -> list[partial]:
     return mapping_fns
 
 
-if __name__ == '__main__':
-    data = get_data(day=5, year=2023).splitlines()
-    # data = ['seeds: 79 14 55 13',
-    #         '',
-    #         'seed-to-soil map:',
-    #         '50 98 2',
-    #         '52 50 48',
-    #         '',
-    #         'soil-to-fertilizer map:',
-    #         '0 15 37',
-    #         '37 52 2',
-    #         '39 0 15',
-    #         '',
-    #         'fertilizer-to-water map:',
-    #         '49 53 8',
-    #         '0 11 42',
-    #         '42 0 7',
-    #         '57 7 4',
-    #         '',
-    #         'water-to-light map:',
-    #         '88 18 7',
-    #         '18 25 70',
-    #         '',
-    #         'light-to-temperature map:',
-    #         '45 77 23',
-    #         '81 45 19',
-    #         '68 64 13',
-    #         '',
-    #         'temperature-to-humidity map:',
-    #         '0 69 1',
-    #         '1 0 69',
-    #         '',
-    #         'humidity-to-location map:',
-    #         '60 56 37',
-    #         '56 93 4']
+def get_mapping_chain_fns(mapping_groupings):
+    fn_chains = []
+    for input_group in mapping_groupings:
+        new_mapping_fns = parse_mappings(input_group)
+        fn_chains.append(new_mapping_fns)
+    return fn_chains
 
-    input_groups = [list(g) for k, g in groupby(data, key=lambda x: x == '') if not k]
-    seeds = parse_seeds(input_groups[0])
-    ic(seeds)
 
-    mapping_chains = []
-    seed_to_soil_map_fns = parse_mappings(input_groups[1])
-    mapping_chains.append(seed_to_soil_map_fns)
-
-    soil_to_fertilizer_map_fns = parse_mappings(input_groups[2])
-    mapping_chains.append(soil_to_fertilizer_map_fns)
-
-    fertilizer_to_water_map_fns = parse_mappings(input_groups[3])
-    mapping_chains.append(fertilizer_to_water_map_fns)
-
-    water_to_light_map_fns = parse_mappings(input_groups[4])
-    mapping_chains.append(water_to_light_map_fns)
-
-    light_to_temperature_map_fns = parse_mappings(input_groups[5])
-    mapping_chains.append(light_to_temperature_map_fns)
-
-    temperature_to_humidity_map_fns = parse_mappings(input_groups[6])
-    mapping_chains.append(temperature_to_humidity_map_fns)
-
-    humidity_to_location_map_fns = parse_mappings(input_groups[7])
-    mapping_chains.append(humidity_to_location_map_fns)
-
-    ic(mapping_chains)
-
+def part1_solve(mapping_chains, seeds) -> int:
     seed_locations = []
-
     for seed in seeds:
         current = seed
         for mapping_chain in mapping_chains:
@@ -107,4 +51,47 @@ if __name__ == '__main__':
                 list(itertools.filterfalse(lambda x: x is None, [map_fn(current) for map_fn in mapping_chain])))
             current = ic(current if len(results) == 0 else results.pop())
         seed_locations.append(current)
-    ic(f'Part 1: {min(seed_locations)}')
+    return min(seed_locations)
+
+if __name__ == '__main__':
+    # data = get_data(day=5, year=2023).splitlines()
+    data = ['seeds: 79 14 55 13',
+            '',
+            'seed-to-soil map:',
+            '50 98 2',
+            '52 50 48',
+            '',
+            'soil-to-fertilizer map:',
+            '0 15 37',
+            '37 52 2',
+            '39 0 15',
+            '',
+            'fertilizer-to-water map:',
+            '49 53 8',
+            '0 11 42',
+            '42 0 7',
+            '57 7 4',
+            '',
+            'water-to-light map:',
+            '88 18 7',
+            '18 25 70',
+            '',
+            'light-to-temperature map:',
+            '45 77 23',
+            '81 45 19',
+            '68 64 13',
+            '',
+            'temperature-to-humidity map:',
+            '0 69 1',
+            '1 0 69',
+            '',
+            'humidity-to-location map:',
+            '60 56 37',
+            '56 93 4']
+
+    input_groups = [list(g) for k, g in groupby(data, key=lambda x: x == '') if not k]
+    seeds = parse_seeds(input_groups[0])
+    ic(seeds)
+
+    mapping_chains = get_mapping_chain_fns(input_groups[1:])
+    ic(f'Part 1: {part1_solve(mapping_chains, seeds)}')
