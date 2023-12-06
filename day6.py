@@ -1,12 +1,9 @@
+import functools
 import itertools
 import math
 from dataclasses import dataclass
-from functools import partial
-from itertools import groupby
+
 from icecream import ic
-from parse import parse
-from itertools import count
-from aocd import get_data
 
 
 def run_race(end: int, record: int, start_time: int) -> int:
@@ -35,18 +32,14 @@ def parse_numbers_from_line(input_line: str) -> list[int]:
         itertools.filterfalse(lambda x: x == '', [number for number in input_line.split(":")[1].strip().split(" ")]))]
 
 
-def parse_race_records(race_times: str, race_distances: str) -> list[RaceRecord]:
+def parse_race_records_part1(race_times: str, race_distances: str) -> list[RaceRecord]:
     times = parse_numbers_from_line(race_times)
     distances = parse_numbers_from_line(race_distances)
     return [RaceRecord(race_time, race_distance) for race_time, race_distance in zip(times, distances)]
 
 
-if __name__ == '__main__':
-    #data = get_data(day=6, year=2023).splitlines()
-    data = ['Time:      7  15   30',
-            'Distance:  9  40  200']
-
-    parsed_race_records = ic(parse_race_records(data[0], data[1]))
+def part1_solve(input_data: list[str]):
+    parsed_race_records = ic(parse_race_records_part1(input_data[0], input_data[1]))
     race_strategies = {}
     for race_record in parsed_race_records:
         current_race_winners = []
@@ -59,3 +52,28 @@ if __name__ == '__main__':
     for race, winners in race_strategies.items():
         winning_strategies.append(len(winners))
     ic(f'Part 1: {math.prod(winning_strategies)}')
+
+
+def part2_solve(input_data: list[str]):
+    race_time = int(functools.reduce(lambda x, y: x + y, itertools.filterfalse(lambda x: x == ' ', [number for number in
+                                                                                                    input_data[0].split(
+                                                                                                        ":")[
+                                                                                                        1].strip()])))
+    race_distance = int(
+        functools.reduce(lambda x, y: x + y, itertools.filterfalse(lambda x: x == ' ', [number for number in
+                                                                                        input_data[1].split(
+                                                                                            ":")[1].strip()])))
+    big_race = ic(RaceRecord(race_time, race_distance))
+    winners = 0
+    for hold_time in range(0, big_race.time):
+        new_record = run_race(big_race.time, big_race.distance, hold_time)
+        winners += 1 if new_record > 0 else 0
+    ic(f'Part 2: {winners}')
+
+
+if __name__ == '__main__':
+    # data = get_data(day=6, year=2023).splitlines()
+    data = ['Time:      7  15   30',
+            'Distance:  9  40  200']
+    part1_solve(data)
+    part2_solve(data)
