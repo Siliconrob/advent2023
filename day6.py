@@ -1,4 +1,6 @@
 import itertools
+import math
+from dataclasses import dataclass
 from functools import partial
 from itertools import groupby
 from icecream import ic
@@ -7,144 +9,53 @@ from itertools import count
 from aocd import get_data
 
 
-def parse_seeds_part1(seed_group: list[str]) -> list[int]:
-    return [int(seed_number) for seed_number in seed_group.pop().split(":")[1].strip().split(" ")]
+def run_race(end: int, record: int, start_time: int) -> int:
+    if start_time >= end:
+        return 0
+    travel_distance = (end - start_time) * start_time
+    if travel_distance <= record:
+        return 0
+    return travel_distance
 
 
-def map_translator(start: int, end: int, range: int, input_number: int) -> int:
-    limit = range - 1
-    if input_number > start + limit or input_number < start:
-        return None
-    if start > end:
-        return input_number - (start - end)
-    if end > start:
-        return input_number + (end - start)
-    return input_number
+@dataclass
+class WinningTime:
+    hold_time: int
+    distance: int
 
 
-def map_translator_reverse(start: int, end: int, range: int, input_number: int) -> int:
-    limit = range - 1
-    if input_number > end + limit or input_number < end:
-        return None
-    if end > start:
-        return input_number - (end - start)
-    if start > end:
-        return input_number + (start - end)
-    return input_number
+@dataclass
+class RaceRecord:
+    time: int
+    distance: int
 
 
-def parse_mappings(mapping_group: list[str]) -> (str, list[partial]):
-    mapping_fns = []
-    mapping_name = mapping_group[0]
-    for mapping_fn in mapping_group[1:]:
-        end, start, range = parse('{:d} {:d} {:d}', mapping_fn)
-        new_fn = partial(map_translator, start, end, range)
-        mapping_fns.append(new_fn)
-    return mapping_name, mapping_fns
+def parse_numbers_from_line(input_line: str) -> list[int]:
+    return [int(valid_number) for valid_number in list(
+        itertools.filterfalse(lambda x: x == '', [number for number in input_line.split(":")[1].strip().split(" ")]))]
 
 
-def get_mapping_chain_fns(mapping_groupings) -> dict:
-    fn_chains = {}
-    for input_group in mapping_groupings:
-        new_map_name, new_mapping_fns = parse_mappings(input_group)
-        fn_chains[new_map_name] = new_mapping_fns
-    return fn_chains
-
-
-def parse_mappings_reversed(mapping_group: list[str]) -> (str, list[partial]):
-    mapping_fns = []
-    mapping_name = mapping_group[0]
-    for mapping_fn in mapping_group[1:]:
-        end, start, range = parse('{:d} {:d} {:d}', mapping_fn)
-        new_fn = partial(map_translator_reverse, start, end, range)
-        mapping_fns.append(new_fn)
-    return mapping_name, mapping_fns
-
-
-def get_reversed_mapping_chain_fns(mapping_groupings) -> dict:
-    fn_chains = {}
-    for input_group in mapping_groupings:
-        new_map_name, new_mapping_fns = parse_mappings_reversed(input_group)
-        fn_chains[f'{new_map_name}_reversed'] = new_mapping_fns
-    return fn_chains
-
-
-def part1_solve(mapping_chains: dict, seeds: list[int]) -> int:
-    seed_locations = []
-    for seed in seeds:
-        current = seed
-        for map_name, mapping_chain in mapping_chains.items():
-            ic(map_name)
-            results = ic(
-                list(itertools.filterfalse(lambda x: x is None, [map_fn(current) for map_fn in mapping_chain])))
-            current = ic(current if len(results) == 0 else results.pop())
-        seed_locations.append(current)
-    return min(seed_locations)
-
-
-def range_check(input_test: int):
-    for x, y in zip(seeds_part1[::2], seeds_part1[1::2]):
-        if x <= input_test < x + y:
-            return True
-    return False
-
-
-def part2_solve(reversed_mapping_chains, input_test_number) -> int:
-    start = input_test_number
-    for map_name, mapping_chain in reversed_mapping_chains.items():
-        ic(map_name)
-        results = ic(list(itertools.filterfalse(lambda x: x is None, [map_fn(start) for map_fn in mapping_chain])))
-        start = ic(start if len(results) == 0 else results.pop())
-    return start
+def parse_race_records(race_times: str, race_distances: str) -> list[RaceRecord]:
+    times = parse_numbers_from_line(race_times)
+    distances = parse_numbers_from_line(race_distances)
+    return [RaceRecord(race_time, race_distance) for race_time, race_distance in zip(times, distances)]
 
 
 if __name__ == '__main__':
-    # data = get_data(day=6, year=2023).splitlines()
-    data = ['seeds: 79 14 55 13',
-            '',
-            'seed-to-soil map:',
-            '50 98 2',
-            '52 50 48',
-            '',
-            'soil-to-fertilizer map:',
-            '0 15 37',
-            '37 52 2',
-            '39 0 15',
-            '',
-            'fertilizer-to-water map:',
-            '49 53 8',
-            '0 11 42',
-            '42 0 7',
-            '57 7 4',
-            '',
-            'water-to-light map:',
-            '88 18 7',
-            '18 25 70',
-            '',
-            'light-to-temperature map:',
-            '45 77 23',
-            '81 45 19',
-            '68 64 13',
-            '',
-            'temperature-to-humidity map:',
-            '0 69 1',
-            '1 0 69',
-            '',
-            'humidity-to-location map:',
-            '60 56 37',
-            '56 93 4']
+    #data = get_data(day=6, year=2023).splitlines()
+    data = ['Time:      7  15   30',
+            'Distance:  9  40  200']
 
-    input_groups = [list(g) for k, g in groupby(data, key=lambda x: x == '') if not k]
-    seeds_part1 = ic(parse_seeds_part1(input_groups[0]))
-    mapping_chains = get_mapping_chain_fns(input_groups[1:])
-    ic(f'Part 1: {part1_solve(mapping_chains, seeds_part1)}')
-
-    new_groups = input_groups[1:]
-    new_groups.reverse()
-
-    reversed_mapping_chains = get_reversed_mapping_chain_fns(new_groups)
-    for test_number in count():
-        possible_seed_result = ic(part2_solve(reversed_mapping_chains, test_number))
-        if range_check(possible_seed_result):
-            ic(f'Part 2 {test_number}')
-            break
+    parsed_race_records = ic(parse_race_records(data[0], data[1]))
+    race_strategies = {}
+    for race_record in parsed_race_records:
+        current_race_winners = []
+        for hold_time in range(0, race_record.time):
+            new_record = run_race(race_record.time, race_record.distance, hold_time)
+            if new_record > 0:
+                current_race_winners.append(WinningTime(hold_time, new_record))
+        race_strategies[race_record.time] = current_race_winners
+    winning_strategies = []
+    for race, winners in race_strategies.items():
+        winning_strategies.append(len(winners))
+    ic(f'Part 1: {math.prod(winning_strategies)}')
