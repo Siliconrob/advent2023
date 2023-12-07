@@ -1,3 +1,5 @@
+import copy
+
 from aocd import get_data
 from collections import Counter, defaultdict
 from dataclasses import dataclass
@@ -110,5 +112,6 @@ if __name__ == '__main__':
             'KK677 28',
             'KTJJT 220',
             'QQQJA 483']
+    # copy is weird comment line to get it right for now
     ic(f'Part 1: {solve_game(data)}')
     ic(f'Part 2: {solve_game(data, False)}')
